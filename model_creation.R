@@ -1,23 +1,43 @@
+install.packages("corrplot")
+
 library(readr)
 library(randomForest)
 library(caret)
-
 library(corrplot)
 library(gridExtra)
 library(ggplot2)
 
+#Change accordingly
+setwd("~/desktop/CDS/house")
+
 train <- read.csv("train.csv", stringsAsFactors=TRUE)
 test  <- read.csv("test.csv",  stringsAsFactors=TRUE)
 
+sapply(train, function(x)any(is.na(x))) 
 #Alley, PoolQC, Fence and MiscFeature have WAY more nulls than the other variables (>1000), so remove them
 train<- train[,-c(7,73,74,75)]
 
+# Get rid of columns with near zero variance
 nzv <- nearZeroVar(train, saveMetrics= TRUE)
 badCols <- nearZeroVar(train)
-train <- train[, -badCols]
+train_variance <- train[, -badCols]
 
-numerical_train <- extractNumeric(train[,!(names(train) %in% col_null)])
-M <- cor(numerical_train)
+# helper function 
+extractNumeric <- function(data) {
+  factor_cols <- names(Filter(function(x) x=="factor", sapply(data, class)))
+  for (col in factor_cols) {
+    data[,col] <- ordered(data[,col])
+    data[,col] <- as.numeric(data[,col])
+  }
+  return(data)
+}
+
+numerical_train <- extractNumeric(train)
+
+# delete columns with na values
+nonnan_numerical <- numerical_train[ , colSums(is.na(numerical_train)) == 0]
+
+M <- cor(nonnan_numerical)
 corrplot(M, tl.cex = .3)
 
 #partition that data
