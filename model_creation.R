@@ -9,7 +9,7 @@ library(ggplot2)
 library(lubridate)
 
 #Change accordingly
-setwd("~/desktop/programming/kaggle/house-prices/")
+setwd("~/desktop/CDS/house")
 
 train <- read.csv("train.csv", stringsAsFactors=TRUE)
 test  <- read.csv("test.csv",  stringsAsFactors=TRUE)
