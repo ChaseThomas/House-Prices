@@ -6,9 +6,10 @@ library(caret)
 library(corrplot)
 library(gridExtra)
 library(ggplot2)
+library(lubridate)
 
 #Change accordingly
-setwd("~/desktop/CDS/house")
+setwd("~/desktop/programming/kaggle/house-prices/")
 
 train <- read.csv("train.csv", stringsAsFactors=TRUE)
 test  <- read.csv("test.csv",  stringsAsFactors=TRUE)
@@ -40,6 +41,11 @@ nonnan_numerical <- numerical_train[ , colSums(is.na(numerical_train)) == 0]
 M <- cor(nonnan_numerical)
 corrplot(M, tl.cex = .3)
 
+# feature engineering: YrSold and MoSold
+train$MonthAge = (lubridate::year(Sys.Date()) - train$YrSold) * 12 + (lubridate::month(Sys.Date()) - train$MoSold)
+test$MonthAge  = (lubridate::year(Sys.Date()) - test$YrSold)  * 12 + (lubridate::month(Sys.Date()) - test$MoSold)
+str(train)
+
 #partition that data
 partition <- createDataPartition(y=train$SalePrice,
                                  p=.8,
@@ -54,3 +60,4 @@ rf <- randomForest(SalePrice ~ ., data=training)
 prediction <- predict(rf, testing)
 
 solution <- data.frame(HouseID = test$Id, Price = prediction)
+
