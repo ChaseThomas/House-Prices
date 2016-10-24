@@ -1,4 +1,5 @@
-install.packages("corrplot")
+#Change accordingly
+setwd("~/datasci/House-Prices")
 
 library(readr)
 library(randomForest)
@@ -7,9 +8,6 @@ library(corrplot)
 library(gridExtra)
 library(ggplot2)
 library(lubridate)
-
-#Change accordingly
-setwd("~/desktop/CDS/house")
 
 train <- read.csv("train.csv", stringsAsFactors=TRUE)
 test  <- read.csv("test.csv",  stringsAsFactors=TRUE)
@@ -34,6 +32,7 @@ extractNumeric <- function(data) {
 }
 
 numerical_train <- extractNumeric(train)
+numerical_test <- extractNumeric(test)
 
 # delete columns with na values
 numerical_train <- sapply(numerical_train[, colSums(is.na(numerical_train)) > 0], function(col) {
@@ -41,31 +40,29 @@ numerical_train <- sapply(numerical_train[, colSums(is.na(numerical_train)) > 0]
 });
 str(numerical_train);
 
+numerical_test <- sapply(numerical_test[, colSums(is.na(numerical_test)) > 0], function(col) {
+  col[is.na(col)] <- median(col, na.rm = TRUE)
+});
+str(numerical_test);
+
 #[is.na(x)] <- median(numerical_train$Fare, na.rm = TRUE)
 #nonnan_numerical <- numerical_train[ , colSums(is.na(numerical_train)) == 0]
 
-M <- cor(nonnan_numerical)
-corrplot(M, tl.cex = .3)
+#M <- cor(nonnan_numerical)
+#corrplot(M, tl.cex = .3)
 
 # feature engineering: YrSold and MoSold
-train$MonthAge = (lubridate::year(Sys.Date()) - train$YrSold) * 12 + (lubridate::month(Sys.Date()) - train$MoSold)
-test$MonthAge  = (lubridate::year(Sys.Date()) - test$YrSold)  * 12 + (lubridate::month(Sys.Date()) - test$MoSold)
+numerical_train$MonthAge = (lubridate::year(Sys.Date()) - train$YrSold) * 12 + (lubridate::month(Sys.Date()) - train$MoSold)
+numerical_test$MonthAge  = (lubridate::year(Sys.Date()) - test$YrSold)  * 12 + (lubridate::month(Sys.Date()) - test$MoSold)
 str(train)
-
-#partition that data
-#partition <- createDataPartition(y=train$SalePrice,
-#                                 p=.8,
-#                                 list=F)
-#training <- train[partition,]
-#testing <- train[-partition,]
 
 #randomForest Model
 rf <- randomForest(SalePrice ~ OverallQual + GrLivArea + TotalBsmtSF
                    + GarageCars + X2ndFlrSF + X1stFlrSF + TotRmsAbvGrd
-                   + BsmtFinSF1 + LotArea + MonthAge, data=train)
+                   + BsmtFinSF1 + LotArea + MonthAge, data=numerical_train)
 
 # Predict using the test set (code adapted from public Kaggle script in forums and Leo's example)
-prediction <- predict(rf, test)
+prediction <- predict(rf, numerical_test)
 
-solution <- data.frame(HouseID = test$Id, Price = prediction)
+solution <- data.frame(id = test$Id, SalePrice = prediction)
 write.csv(solution, "house_prices_output.csv", row.names = FALSE)
