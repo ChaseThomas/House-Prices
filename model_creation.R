@@ -1,5 +1,5 @@
 #Change accordingly
-setwd("~/datasci/House-Prices")
+#setwd("~/datasci/House-Prices")
 
 library(readr)
 library(randomForest)
@@ -15,11 +15,17 @@ test  <- read.csv("test.csv",  stringsAsFactors=TRUE)
 sapply(train, function(x)any(is.na(x))) 
 #Alley, PoolQC, Fence and MiscFeature have WAY more nulls than the other variables (>1000), so remove them
 train<- train[,-c(7,73,74,75)]
+#---------------------------
+test <- test[,-c(7,73,74,75)]
+#---------------------------
 
 # Get rid of columns with near zero variance
 nzv <- nearZeroVar(train, saveMetrics= TRUE)
 badCols <- nearZeroVar(train)
 train_variance <- train[, -badCols]
+#---------------------------
+test_variance <- test[, -badCols]
+#---------------------------
 
 # helper function 
 extractNumeric <- function(data) {
@@ -35,15 +41,27 @@ numerical_train <- extractNumeric(train)
 numerical_test <- extractNumeric(test)
 
 # delete columns with na values
-numerical_train <- sapply(numerical_train[, colSums(is.na(numerical_train)) > 0], function(col) {
-  col[is.na(col)] <- median(col, na.rm = TRUE)
-});
-str(numerical_train);
+#numerical_train <- sapply(numerical_train[, colSums(is.na(numerical_train)) > 0], function(col) {
+#  col[is.na(col)] <- median(col, na.rm = TRUE)
+#});
+#str(numerical_train);
 
-numerical_test <- sapply(numerical_test[, colSums(is.na(numerical_test)) > 0], function(col) {
-  col[is.na(col)] <- median(col, na.rm = TRUE)
-});
-str(numerical_test);
+#---------------------------
+for(i in 1:ncol(numerical_train)){
+  numerical_train[is.na(numerical_train[,i]), i] <- median(numerical_train[,i], na.rm = TRUE)
+}
+#---------------------------
+
+#numerical_test <- sapply(numerical_test[, colSums(is.na(numerical_test)) > 0], function(col) {
+#  col[is.na(col)] <- median(col, na.rm = TRUE)
+#});
+#str(numerical_test);
+
+#---------------------------
+for(i in 1:ncol(numerical_test)){
+  numerical_test[is.na(numerical_test[,i]), i] <- median(numerical_test[,i], na.rm = TRUE)
+}
+#---------------------------
 
 #[is.na(x)] <- median(numerical_train$Fare, na.rm = TRUE)
 #nonnan_numerical <- numerical_train[ , colSums(is.na(numerical_train)) == 0]
