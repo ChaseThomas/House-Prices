@@ -56,13 +56,22 @@ numerical_train$MonthAge = (lubridate::year(Sys.Date()) - train$YrSold) * 12 + (
 numerical_test$MonthAge  = (lubridate::year(Sys.Date()) - test$YrSold)  * 12 + (lubridate::month(Sys.Date()) - test$MoSold)
 str(train)
 
-#randomForest Model
-rf <- randomForest(SalePrice ~ OverallQual + GrLivArea + TotalBsmtSF
-                   + GarageCars + X2ndFlrSF + X1stFlrSF + TotRmsAbvGrd
-                   + BsmtFinSF1 + LotArea + MonthAge, data=numerical_train)
+index = createDataPartition(train$Id, p = .8, list = FALSE, times = 1)
+df_train = train[index,]
+train_y = df_train$count
+df_train$Id = NULL
+df_test = train[-index,]
+test_y = df_test$count
+df_test$Id = NULL
 
+features = c("OverallQual", "GrLivArea", "TotalBsmtSF",
+            "GarageCars", "X2ndFlrSF", "X1stFlrSF", "TotRmsAbvGrd",
+            "BsmtFinSF1", "LotArea", "MonthAge")
+
+# Random forest
+rf <- randomForest(df_train[features,], train_y, ntree=1000, importance=TRUE)
 # Predict using the test set (code adapted from public Kaggle script in forums and Leo's example)
-prediction <- predict(rf, numerical_test)
+prediction <- predict(rf, numerical_test[features,])
 
 solution <- data.frame(id = test$Id, SalePrice = prediction)
 write.csv(solution, "house_prices_output.csv", row.names = FALSE)
