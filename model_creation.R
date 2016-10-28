@@ -1,5 +1,5 @@
 #Change accordingly
-setwd("~/desktop/CDS/house")
+#setwd("~/desktop/CDS/house")
 
 library(readr)
 library(randomForest)
@@ -102,12 +102,13 @@ for(i in 1:num_folds){
   testIndexes <- which(folds==i,arr.ind=TRUE)
   trainData <- numerical_train[testIndexes, ]
   testData <- numerical_train[-testIndexes, ]
-  train_y = trainData
   test_y = testData$SalePrice
   
   rf = randomForest(SalePrice ~ OverallQual + GrLivArea + TotalBsmtSF
                      + GarageCars + X2ndFlrSF + X1stFlrSF + TotRmsAbvGrd
-                     + BsmtFinSF1 + LotArea + MonthAge,train_y, ntree=100, importance=TRUE)
+                     + BsmtFinSF1 + LotArea + MonthAge + Neighborhood + BsmtQual +
+                      HouseStyle + FireplaceQu + GarageFinish + GarageType + 
+                      CentralAir,trainData, ntree=500, importance=TRUE)
   pred = predict(rf, testData)
   print(RMSLE(pred, test_y))
 }
