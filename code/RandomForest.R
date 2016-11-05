@@ -19,6 +19,13 @@ features = c("OverallQual", "GrLivArea", "TotalBsmtSF",
             "BsmtFinSF1", "LotArea", "MonthAge")
 
 train_test <- processTrainTest(train, test, features)
+
+# processTrainTest returns a list of four vectors:
+# processed_train: the training set with selected features only
+# processed_test: the testing set with selected features only
+# train_y: the y-value (thing we are trying to predict) for the training set
+# test_y: the y-value (thing we are trying to predict) for the testing set
+
 processed_train <- data.frame(train_test[1])
 processed_test <- data.frame(train_test[2])
 train_y <- unlist(train_test[3])
@@ -32,4 +39,8 @@ prediction <- predict(rf, processed_test)
 solution <- data.frame(id = test$Id, SalePrice = prediction)
 write.csv(solution, "house_prices_output.csv", row.names = FALSE)
 
-crossValidate(train, features)
+applyRandomForest <- function(train, train_y) {
+  randomForest(train, train_y, ntree = numTrees, importance = TRUE)
+}
+
+crossValidate(train, features, applyRandomForest)

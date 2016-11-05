@@ -10,10 +10,11 @@ RMSLE <- function(a, p) {
   sqrt(sum((log(p[x]+1) - log(a[x]+1))^2)/sum(x))
 }
 
-crossValidate <- function(train, features) {
+crossValidate <- function(train, features, model_func) {
   # Arguments:
   # train - the training data set
   # features - the features we want to look at (must be the same as in the model!)
+  # model_func - a function representing an application of the model
 
   # Create 5 equally sized folds
   num_folds = 5
@@ -26,11 +27,7 @@ crossValidate <- function(train, features) {
     testData <- numerical_train[-testIndexes, ]
     test_y <- testData$SalePrice
 
-    rf <- randomForest(
-      trainData[features],
-      trainData$SalePrice,
-      ntree = 500,
-      importance = TRUE)
+    model <- model_func(trainData, trainData$SalePrice)
     pred <- predict(rf, testData)
     print(RMSLE(pred, test_y))
   }
