@@ -1,6 +1,10 @@
 # Random Forest
 # Making predictions using the XGradientBoost model.
 
+# This file must be run in the /data directory to work!
+# Run the following command before executing:
+# setwd("~/<insert your directory here>/House-Prices/data")
+
 library(readr)
 library(xgboost)
 library(caret)
@@ -45,7 +49,7 @@ numerical_train <- extractNumeric(train)
 numerical_test <- extractNumeric(test)
 
 # delete columns with na values
-#numerical_train <- sapply(numerical_train[, colSums(is.na(numerical_train)) > 0], 
+#numerical_train <- sapply(numerical_train[, colSums(is.na(numerical_train)) > 0],
 # function(col) {
 #  col[is.na(col)] <- median(col, na.rm = TRUE)
 # });
@@ -53,7 +57,7 @@ numerical_test <- extractNumeric(test)
 
 #---------------------------
 for (i in 1:ncol(numerical_train)){
-  numerical_train[is.na(numerical_train[,i]), i] <- 
+  numerical_train[is.na(numerical_train[,i]), i] <-
     median(numerical_train[,i], na.rm = TRUE)
 }
 #---------------------------
@@ -66,7 +70,7 @@ for (i in 1:ncol(numerical_train)){
 
 #---------------------------
 for(i in 1:ncol(numerical_test)){
-  numerical_test[is.na(numerical_test[, i]), i] <- 
+  numerical_test[is.na(numerical_test[, i]), i] <-
     median(numerical_test[, i], na.rm = TRUE)
 }
 #---------------------------
@@ -78,11 +82,11 @@ for(i in 1:ncol(numerical_test)){
 #corrplot(M, tl.cex = .3)
 
 # feature engineering: YrSold and MoSold
-numerical_train$MonthAge <- 
-  (lubridate::year(Sys.Date()) - train$YrSold) * 12 + 
+numerical_train$MonthAge <-
+  (lubridate::year(Sys.Date()) - train$YrSold) * 12 +
   (lubridate::month(Sys.Date()) - train$MoSold)
-numerical_test$MonthAge  <- 
-  (lubridate::year(Sys.Date()) - test$YrSold)  * 12 + 
+numerical_test$MonthAge  <-
+  (lubridate::year(Sys.Date()) - test$YrSold)  * 12 +
   (lubridate::month(Sys.Date()) - test$MoSold)
 
 index <- createDataPartition(train$Id, p = .8, list = FALSE, times = 1)
@@ -128,13 +132,13 @@ for(i in 1:num_folds){
   trainData <- numerical_train[testIndexes, ]
   testData <- numerical_train[-testIndexes, ]
   test_y <- testData$SalePrice
-  
+
   # SalePrice ~ OverallQual + GrLivArea + TotalBsmtSF
   # + GarageCars + X2ndFlrSF + X1stFlrSF + TotRmsAbvGrd
   #+ BsmtFinSF1 + LotArea + MonthAge + Neighborhood + BsmtQual +
-  #  HouseStyle + FireplaceQu + GarageFinish + GarageType + 
+  #  HouseStyle + FireplaceQu + GarageFinish + GarageType +
   #  CentralAir
-  
+
   xg <- xgboost(
     data = as.matrix(trainData),
     label = trainData$SalePrice,

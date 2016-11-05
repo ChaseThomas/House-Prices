@@ -1,14 +1,14 @@
 # Random Forest
 # Making predictions using the Random Forest model.
 
-library(readr)
+# This file must be run in the /data directory to work!
+# Run the following command before executing:
+# setwd("~/<insert your directory here>/House-Prices/data")
+
 library(randomForest)
 library(caret)
-library(corrplot)
-library(gridExtra)
-library(ggplot2)
-library(lubridate)
 source("../code/DataProcessing.R")
+source("../code/Scoring.R")
 
 numTrees <- 100
 
@@ -32,25 +32,4 @@ prediction <- predict(rf, processed_test)
 solution <- data.frame(id = test$Id, SalePrice = prediction)
 write.csv(solution, "house_prices_output.csv", row.names = FALSE)
 
-#function to calculate log error
-RMSLE <- function(a, p) {
-  if (length(a) != length(p)) stop("Actual and Predicted need to be equal lengths!")
-  x <- !is.na(a)
-  sqrt(sum((log(p[x]+1) - log(a[x]+1))^2)/sum(x))
-}
-
-#Create 5 equally size folds
-num_folds = 5
-folds <- cut(seq(1,nrow(train)), breaks = num_folds, labels = FALSE)
-
-for(i in 1:num_folds){
-  #Segement your data by fold using the which() function
-  testIndexes <- which(folds==i,arr.ind=TRUE)
-  trainData <- numerical_train[testIndexes, ]
-  testData <- numerical_train[-testIndexes, ]
-  test_y <- testData$SalePrice
-
-  rf <- randomForest(trainData[features],trainData$SalePrice, ntree=500, importance=TRUE)
-  pred <- predict(rf, testData)
-  print(RMSLE(pred, test_y))
-}
+crossValidate(train, features)
