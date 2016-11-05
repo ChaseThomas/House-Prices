@@ -1,0 +1,8 @@
+Directory structure:
+
+code/
+  R scripts using various models (random forest, XGBoost, etc.)
+data/
+  Contains the CSV data files train.csv and test.csv
+docs/
+  Contains documentation related to the project, such as data descriptions.
