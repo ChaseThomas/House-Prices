@@ -1,5 +1,5 @@
-#Change accordingly
-#setwd("~/desktop/CDS/house")
+# Random Forest
+# Making predictions using the XGradientBoost model.
 
 library(readr)
 library(xgboost)
@@ -9,18 +9,22 @@ library(gridExtra)
 library(ggplot2)
 library(lubridate)
 
-train <- read.csv("train.csv", stringsAsFactors=TRUE)
-test  <- read.csv("test.csv",  stringsAsFactors=TRUE)
+train <- read.csv("train.csv", stringsAsFactors = TRUE)
+test  <- read.csv("test.csv",  stringsAsFactors = TRUE)
 
-sapply(train, function(x)any(is.na(x)))
-#Alley, PoolQC, Fence and MiscFeature have WAY more nulls than the other variables (>1000), so remove them
-train<- train[,-c(7,73,74,75)]
+sapply(train, function(x) {
+  any(is.na(x))
+})
+
+# Alley, PoolQC, Fence and MiscFeature have WAY more nulls
+# than the other variables (>1000), so remove them
+train <- train[, -c(7, 73, 74, 75)]
 #---------------------------
-test <- test[,-c(7,73,74,75)]
+test <- test[, -c(7, 73, 74, 75)]
 #---------------------------
 
 # Get rid of columns with near zero variance
-nzv <- nearZeroVar(train, saveMetrics= TRUE)
+nzv <- nearZeroVar(train, saveMetrics = TRUE)
 badCols <- nearZeroVar(train)
 train_variance <- train[, -badCols]
 #---------------------------
@@ -31,8 +35,8 @@ test_variance <- test[, -badCols]
 extractNumeric <- function(data) {
   factor_cols <- names(Filter(function(x) x=="factor", sapply(data, class)))
   for (col in factor_cols) {
-    data[,col] <- ordered(data[,col])
-    data[,col] <- as.numeric(data[,col])
+    data[, col] <- ordered(data[, col])
+    data[, col] <- as.numeric(data[, col])
   }
   return(data)
 }
@@ -41,25 +45,29 @@ numerical_train <- extractNumeric(train)
 numerical_test <- extractNumeric(test)
 
 # delete columns with na values
-#numerical_train <- sapply(numerical_train[, colSums(is.na(numerical_train)) > 0], function(col) {
+#numerical_train <- sapply(numerical_train[, colSums(is.na(numerical_train)) > 0], 
+# function(col) {
 #  col[is.na(col)] <- median(col, na.rm = TRUE)
-#});
+# });
 #str(numerical_train);
 
 #---------------------------
-for(i in 1:ncol(numerical_train)){
-  numerical_train[is.na(numerical_train[,i]), i] <- median(numerical_train[,i], na.rm = TRUE)
+for (i in 1:ncol(numerical_train)){
+  numerical_train[is.na(numerical_train[,i]), i] <- 
+    median(numerical_train[,i], na.rm = TRUE)
 }
 #---------------------------
 
-#numerical_test <- sapply(numerical_test[, colSums(is.na(numerical_test)) > 0], function(col) {
+#numerical_test <- sapply(numerical_test[, colSums(is.na(numerical_test)) > 0],
+# function(col) {
 #  col[is.na(col)] <- median(col, na.rm = TRUE)
 #});
 #str(numerical_test);
 
 #---------------------------
 for(i in 1:ncol(numerical_test)){
-  numerical_test[is.na(numerical_test[,i]), i] <- median(numerical_test[,i], na.rm = TRUE)
+  numerical_test[is.na(numerical_test[, i]), i] <- 
+    median(numerical_test[, i], na.rm = TRUE)
 }
 #---------------------------
 
@@ -70,24 +78,32 @@ for(i in 1:ncol(numerical_test)){
 #corrplot(M, tl.cex = .3)
 
 # feature engineering: YrSold and MoSold
-numerical_train$MonthAge = (lubridate::year(Sys.Date()) - train$YrSold) * 12 + (lubridate::month(Sys.Date()) - train$MoSold)
-numerical_test$MonthAge  = (lubridate::year(Sys.Date()) - test$YrSold)  * 12 + (lubridate::month(Sys.Date()) - test$MoSold)
-str(train)
+numerical_train$MonthAge <- 
+  (lubridate::year(Sys.Date()) - train$YrSold) * 12 + 
+  (lubridate::month(Sys.Date()) - train$MoSold)
+numerical_test$MonthAge  <- 
+  (lubridate::year(Sys.Date()) - test$YrSold)  * 12 + 
+  (lubridate::month(Sys.Date()) - test$MoSold)
 
-index = createDataPartition(train$Id, p = .8, list = FALSE, times = 1)
-df_train = numerical_train[index,]
-df_train$Id = NULL
-train_y = df_train$count
-df_test = numerical_train[-index,]
-df_test$Id = NULL
-test_y = df_test$count
+index <- createDataPartition(train$Id, p = .8, list = FALSE, times = 1)
+df_train <- numerical_train[index, ]
+df_train$Id <- NULL
+train_y <- df_train$count
+df_test <- numerical_train[-index, ]
+df_test$Id <- NULL
+test_y <- df_test$count
 
-features = c("OverallQual", "GrLivArea", "TotalBsmtSF",
+features <- c("OverallQual", "GrLivArea", "TotalBsmtSF",
              "GarageCars", "X2ndFlrSF", "X1stFlrSF", "TotRmsAbvGrd",
              "BsmtFinSF1", "LotArea", "MonthAge")
 
 # Random forest
-xg <- xgboost(data=as.matrix(df_train[features]), label=df_train$SalePrice, nround = 2, objective="reg:linear")
+xg <- xgboost(
+  data = as.matrix(df_train[features]),
+  label = df_train$SalePrice,
+  nround = 2,
+  objective = "reg:linear"
+)
 # Predict using the test set (code adapted from public Kaggle script in forums and Leo's example)
 prediction <- predict(xg, as.matrix(numerical_test[features]))
 
@@ -103,15 +119,15 @@ RMSLE <- function(a, p) {
 }
 
 #Create 5 equally size folds
-num_folds = 5
-folds <- cut(seq(1,nrow(train)),breaks=num_folds,labels=FALSE)
+num_folds <- 5
+folds <- cut(seq(1,nrow(train)),breaks = num_folds, labels = FALSE)
 
 for(i in 1:num_folds){
   #Segement your data by fold using the which() function
-  testIndexes <- which(folds==i,arr.ind=TRUE)
+  testIndexes <- which(folds == i,arr.ind = TRUE)
   trainData <- numerical_train[testIndexes, ]
   testData <- numerical_train[-testIndexes, ]
-  test_y = testData$SalePrice
+  test_y <- testData$SalePrice
   
   # SalePrice ~ OverallQual + GrLivArea + TotalBsmtSF
   # + GarageCars + X2ndFlrSF + X1stFlrSF + TotRmsAbvGrd
@@ -119,8 +135,12 @@ for(i in 1:num_folds){
   #  HouseStyle + FireplaceQu + GarageFinish + GarageType + 
   #  CentralAir
   
-  xg = xgboost(data=as.matrix(trainData), label=trainData$SalePrice, nround = 2, objective="reg:linear")
-  pred = predict(xg, as.matrix(testData))
+  xg <- xgboost(
+    data = as.matrix(trainData),
+    label = trainData$SalePrice,
+    nround = 2,
+    objective = "reg:linear"
+  )
+  pred <- predict(xg, as.matrix(testData))
   print(RMSLE(pred, test_y))
 }
-
