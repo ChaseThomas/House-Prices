@@ -14,6 +14,15 @@ numTrees <- 100
 
 train <- read.csv("train.csv", stringsAsFactors = TRUE)
 test  <- read.csv("test.csv",  stringsAsFactors = TRUE)
+
+applyRandomForest <- function(train, train_y) {
+  randomForest(train, train_y, ntree = numTrees, importance = TRUE)
+}
+
+applyPrediction <- function(rf, test) {
+  predict(rf, test)
+}
+
 features = c("OverallQual", "GrLivArea", "TotalBsmtSF",
             "GarageCars", "X2ndFlrSF", "X1stFlrSF", "TotRmsAbvGrd",
             "BsmtFinSF1", "LotArea", "MonthAge")
@@ -32,15 +41,11 @@ train_y <- unlist(train_test[3])
 test_y <- unlist(train_test[4])
 
 # Random forest
-rf <- randomForest(processed_train, train_y, ntree=numTrees, importance=TRUE)
+rf <- applyRandomForest(processed_train, train_y)
 # Predict using the test set (code adapted from public Kaggle script in forums and Leo's example)
-prediction <- predict(rf, processed_test)
+prediction <- applyPrediction(rf, processed_test)
 
 solution <- data.frame(id = test$Id, SalePrice = prediction)
 write.csv(solution, "house_prices_output.csv", row.names = FALSE)
 
-applyRandomForest <- function(train, train_y) {
-  randomForest(train, train_y, ntree = numTrees, importance = TRUE)
-}
-
-crossValidate(train, features, applyRandomForest)
+crossValidate(train, features, applyRandomForest, applyPrediction)
