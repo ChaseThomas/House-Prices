@@ -8,99 +8,29 @@ library(corrplot)
 library(gridExtra)
 library(ggplot2)
 library(lubridate)
+source("../code/DataProcessing.R")
+
+numTrees <- 100
 
 train <- read.csv("train.csv", stringsAsFactors = TRUE)
 test  <- read.csv("test.csv",  stringsAsFactors = TRUE)
-
-sapply(train, function(x) {
-  any(is.na(x))
-})
-
-# Alley, PoolQC, Fence and MiscFeature have WAY more nulls 
-# than the other variables (>1000), so remove them
-train<- train[,-c(7,73,74,75)]
-#---------------------------
-test <- test[,-c(7,73,74,75)]
-#---------------------------
-
-# Get rid of columns with near zero variance
-nzv <- nearZeroVar(train, saveMetrics= TRUE)
-badCols <- nearZeroVar(train)
-train_variance <- train[, -badCols]
-#---------------------------
-test_variance <- test[, -badCols]
-#---------------------------
-
-# helper function
-extractNumeric <- function(data) {
-  factor_cols <- names(Filter(function(x) x=="factor", sapply(data, class)))
-  for (col in factor_cols) {
-    data[,col] <- ordered(data[,col])
-    data[,col] <- as.numeric(data[,col])
-  }
-  return(data)
-}
-
-numerical_train <- extractNumeric(train)
-numerical_test <- extractNumeric(test)
-
-# delete columns with na values
-#numerical_train <- sapply(numerical_train[, colSums(is.na(numerical_train)) > 0], function(col) {
-#  col[is.na(col)] <- median(col, na.rm = TRUE)
-#});
-#str(numerical_train);
-
-#---------------------------
-for(i in 1:ncol(numerical_train)){
-  numerical_train[is.na(numerical_train[,i]), i] <- median(numerical_train[,i], na.rm = TRUE)
-}
-#---------------------------
-
-#numerical_test <- sapply(numerical_test[, colSums(is.na(numerical_test)) > 0], function(col) {
-#  col[is.na(col)] <- median(col, na.rm = TRUE)
-#});
-#str(numerical_test);
-
-#---------------------------
-for(i in 1:ncol(numerical_test)){
-  numerical_test[is.na(numerical_test[,i]), i] <- median(numerical_test[,i], na.rm = TRUE)
-}
-#---------------------------
-
-#[is.na(x)] <- median(numerical_train$Fare, na.rm = TRUE)
-#nonnan_numerical <- numerical_train[ , colSums(is.na(numerical_train)) == 0]
-
-#M <- cor(nonnan_numerical)
-#corrplot(M, tl.cex = .3)
-
-# feature engineering: YrSold and MoSold
-numerical_train$MonthAge <- 
-  (lubridate::year(Sys.Date()) - train$YrSold) * 12 + 
-  (lubridate::month(Sys.Date()) - train$MoSold)
-numerical_test$MonthAge  <- 
-  (lubridate::year(Sys.Date()) - test$YrSold)  * 12 + 
-  (lubridate::month(Sys.Date()) - test$MoSold)
-
-index <- createDataPartition(train$Id, p = .8, list = FALSE, times = 1)
-df_train <- numerical_train[index, ]
-df_train$Id <- NULL
-train_y <- df_train$SalePrice
-df_test <- numerical_train[-index, ]
-df_test$Id <- NULL
-test_y <- df_test$SalePrice
-
 features = c("OverallQual", "GrLivArea", "TotalBsmtSF",
             "GarageCars", "X2ndFlrSF", "X1stFlrSF", "TotRmsAbvGrd",
             "BsmtFinSF1", "LotArea", "MonthAge")
 
+train_test <- processTrainTest(train, test, features)
+processed_train <- data.frame(train_test[1])
+processed_test <- data.frame(train_test[2])
+train_y <- unlist(train_test[3])
+test_y <- unlist(train_test[4])
+
 # Random forest
-rf <- randomForest(df_train[features], train_y, ntree=100, importance=TRUE)
+rf <- randomForest(processed_train, train_y, ntree=numTrees, importance=TRUE)
 # Predict using the test set (code adapted from public Kaggle script in forums and Leo's example)
-prediction <- predict(rf, numerical_test[features])
+prediction <- predict(rf, processed_test)
 
 solution <- data.frame(id = test$Id, SalePrice = prediction)
 write.csv(solution, "house_prices_output.csv", row.names = FALSE)
-
 
 #function to calculate log error
 RMSLE <- function(a, p) {
@@ -120,12 +50,7 @@ for(i in 1:num_folds){
   testData <- numerical_train[-testIndexes, ]
   test_y <- testData$SalePrice
 
-  rf <- randomForest(SalePrice ~ OverallQual + GrLivArea + TotalBsmtSF
-                     + GarageCars + X2ndFlrSF + X1stFlrSF + TotRmsAbvGrd
-                     + BsmtFinSF1 + LotArea + MonthAge + Neighborhood + BsmtQual +
-                      HouseStyle + FireplaceQu + GarageFinish + GarageType +
-                      CentralAir,trainData, ntree=500, importance=TRUE)
+  rf <- randomForest(trainData[features],trainData$SalePrice, ntree=500, importance=TRUE)
   pred <- predict(rf, testData)
   print(RMSLE(pred, test_y))
 }
-
