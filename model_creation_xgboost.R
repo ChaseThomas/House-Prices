@@ -1,8 +1,6 @@
 #Change accordingly
 #setwd("~/desktop/CDS/house")
 
-install.packages("xgboost")
-
 library(readr)
 library(xgboost)
 library(caret)
@@ -77,21 +75,21 @@ numerical_test$MonthAge  = (lubridate::year(Sys.Date()) - test$YrSold)  * 12 + (
 str(train)
 
 index = createDataPartition(train$Id, p = .8, list = FALSE, times = 1)
-df_train = train[index,]
-train_y = df_train$count
+df_train = numerical_train[index,]
 df_train$Id = NULL
-df_test = train[-index,]
-test_y = df_test$count
+train_y = df_train$count
+df_test = numerical_train[-index,]
 df_test$Id = NULL
+test_y = df_test$count
 
 features = c("OverallQual", "GrLivArea", "TotalBsmtSF",
              "GarageCars", "X2ndFlrSF", "X1stFlrSF", "TotRmsAbvGrd",
              "BsmtFinSF1", "LotArea", "MonthAge")
 
 # Random forest
-xg <- xgboost(data=df_train[features,], nround = 2, objective="reg:linear")
+xg <- xgboost(data=as.matrix(df_train[features]), label=df_train$SalePrice, nround = 2, objective="reg:linear")
 # Predict using the test set (code adapted from public Kaggle script in forums and Leo's example)
-prediction <- predict(xg, numerical_test[features,])
+prediction <- predict(xg, as.matrix(numerical_test[features]))
 
 solution <- data.frame(id = test$Id, SalePrice = prediction)
 write.csv(solution, "house_prices_output.csv", row.names = FALSE)
@@ -121,7 +119,8 @@ for(i in 1:num_folds){
   #  HouseStyle + FireplaceQu + GarageFinish + GarageType + 
   #  CentralAir
   
-  xg = xgboost(nround = 2, objective = "reg:linear", data=trainData)
-  pred = predict(xg, testData)
+  xg = xgboost(data=as.matrix(trainData), label=trainData$SalePrice, nround = 2, objective="reg:linear")
+  pred = predict(xg, as.matrix(testData))
   print(RMSLE(pred, test_y))
 }
+
