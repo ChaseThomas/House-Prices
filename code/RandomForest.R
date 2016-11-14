@@ -12,8 +12,8 @@ source("../code/Scoring.R")
 
 numTrees <- 100
 
-train <- read.csv("train.csv", stringsAsFactors = TRUE)
-test  <- read.csv("test.csv",  stringsAsFactors = TRUE)
+train <- read.csv("../data/train.csv", stringsAsFactors = TRUE)
+test  <- read.csv("../data/test.csv",  stringsAsFactors = TRUE)
 
 applyRandomForest <- function(train, train_y) {
   randomForest(train, train_y, ntree = numTrees, importance = TRUE)

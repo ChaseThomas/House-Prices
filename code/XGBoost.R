@@ -12,8 +12,8 @@ source("../code/Scoring.R")
 
 rounds <- 10
 
-train <- read.csv("train.csv", stringsAsFactors = TRUE)
-test  <- read.csv("test.csv",  stringsAsFactors = TRUE)
+train <- read.csv("../data/train.csv", stringsAsFactors = TRUE)
+test  <- read.csv("../data/test.csv",  stringsAsFactors = TRUE)
 features <- c("OverallQual", "GrLivArea", "TotalBsmtSF",
              "GarageCars", "X2ndFlrSF", "X1stFlrSF", "TotRmsAbvGrd",
              "BsmtFinSF1", "LotArea", "MonthAge")
