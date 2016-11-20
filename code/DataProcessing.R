@@ -16,13 +16,6 @@ processTrainTest <- function(train, test, features) {
   # train_y: the y-value (thing we are trying to predict) for the training set
   # test_y: the y-value (thing we are trying to predict) for the testing set
 
-  # Alley, PoolQC, Fence and MiscFeature have WAY more nulls
-  # than the other variables (>1000), so remove them
-  train<- train[,-c(7,73,74,75)]
-  #---------------------------
-  test <- test[,-c(7,73,74,75)]
-  #---------------------------
-
   # Get rid of columns with near zero variance
   nzv <- nearZeroVar(train, saveMetrics= TRUE)
   badCols <- nearZeroVar(train)

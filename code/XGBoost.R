@@ -12,11 +12,16 @@ source("../code/Scoring.R")
 
 rounds <- 10
 
-train <- read.csv("../data/train.csv", stringsAsFactors = TRUE)
+train <- read.csv("../data/cleaned_train.csv", stringsAsFactors = TRUE)
 test  <- read.csv("../data/test.csv",  stringsAsFactors = TRUE)
-features <- c("OverallQual", "GrLivArea", "TotalBsmtSF",
-             "GarageCars", "X2ndFlrSF", "X1stFlrSF", "TotRmsAbvGrd",
-             "BsmtFinSF1", "LotArea", "MonthAge")
+features <- c("MSSubClass","MSZoning","LotFrontage","LotArea","LandContour"
+              ,"Neighborhood","BldgType","HouseStyle","OverallQual","OverallCond"
+              ,"YearBuilt","YearRemodAdd","Exterior1st","Exterior2nd","MasVnrArea","ExterQual",
+              "Foundation","BsmtQual","BsmtFinType1","BsmtFinSF1","BsmtUnfSF","TotalBsmtSF",
+              "HeatingQC","CentralAir","Electrical","X1stFlrSF","X2ndFlrSF","GrLivArea","BsmtFullBath",
+              "FullBath","HalfBath","BedroomAbvGr","KitchenAbvGr","KitchenQual","TotRmsAbvGrd","Fireplaces",
+              "GarageType","GarageYrBlt","GarageFinish","GarageCars","GarageArea","PavedDrive","WoodDeckSF",
+              "OpenPorchSF", "YrSold", "MoSold")
 
 train_test <- processTrainTest(train, test, features)
 
